@@ -1,6 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+
+)
+
 
 var (
 	n    int
@@ -36,13 +41,13 @@ func main() {
 	fmt.Printf("\t4.退出\n")
 	for loop {
 		fmt.Println("请输入操作命令所对应的数字：")
-		fmt.Scanf("%d", &op)
+		fmt.Scanf("%d\r\n", &op)
 		switch op {
 		case 0:
 			output(q)
 		case 1:
 			fmt.Println("请输入要插入的数字：")
-			fmt.Scanf("%d", &val)
+			fmt.Scanf("%d\r\n", &val)
 			push(q, val)
 		case 2:
 			pop(q)
@@ -55,8 +60,11 @@ func main() {
 	}
 }
 
-func top(q *Heap) int {
-	return q.data[0]
+func top(q *Heap) (int,error) {
+	if q.n==0 {
+		return 0,errors.New("data is empty")
+	}
+	return q.data[0],nil
 }
 
 // 出队操作
@@ -65,9 +73,11 @@ func pop(q *Heap) {
 	if q.n == 0 {
 		return
 	}
-	q.n--
 	q.data[0] = q.data[q.n-1]
-	downUpdate(q, 1)
+	q.n--
+	q.data = q.data[:q.n]
+	fmt.Println("data is:", q.data)
+	downUpdate(q, 0)
 }
 
 // 堆的向下调整操作
@@ -75,9 +85,9 @@ func pop(q *Heap) {
 // temp 指向两个子节点中值较小的节点
 // ind * 2 <= q->n 说明当前节点还有子节点
 func downUpdate(q *Heap, ind int) {
-	for ind*2 <= q.n {
-		temp := ind * 2
-		if temp+1 <= q.n && q.data[temp+1] < q.data[temp] {
+	for (ind+1)*2 <= q.n {
+		temp := ind*2 + 1
+		if temp+1 < q.n && q.data[temp+1] < q.data[temp] {
 			temp = temp + 1
 		}
 		if q.data[ind] <= q.data[temp] {
@@ -90,12 +100,13 @@ func downUpdate(q *Heap, ind int) {
 // 入队操作
 // 先放置元素，再向上调整
 func push(q *Heap, element int) bool {
-	if q.n == q.size-1 {
+	if q.n == q.size {
 		return false
 	}
-	q.data[q.n] = element
+
 	q.n++
-	upUpdate(q, q.n)
+	q.data[q.n-1] = element
+	upUpdate(q, q.n-1)
 	return true
 }
 
@@ -105,7 +116,7 @@ func push(q *Heap, element int) bool {
 func upUpdate(q *Heap, ind int) {
 	var father int
 	for ind != 0 {
-		father = ind / 2
+		father = (ind - 1) / 2
 		if q.data[father] <= q.data[ind] {
 			break
 		}
@@ -114,7 +125,7 @@ func upUpdate(q *Heap, ind int) {
 }
 
 func output(q *Heap) {
-	fmt.Println("data is", q.data, "n is:", n)
+	fmt.Println("data is", q.data, "n is:", q.n)
 }
 
 // 初始化一个最大容量为 size 的优先队列
